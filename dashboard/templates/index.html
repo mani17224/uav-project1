@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UAV Cybersecurity Dashboard</title>
+<style>
+    :root{
+        --bg:#0b0f1a;
+        --panel:#121826;
+        --panel-border:#1f2937;
+        --accent:#00e5ff;
+        --accent2:#7c3aed;
+        --green:#22c55e;
+        --amber:#f59e0b;
+        --red:#ef4444;
+        --text:#e5e7eb;
+        --muted:#8b95a7;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+        font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(0,229,255,0.08), transparent 40%),
+            radial-gradient(circle at 80% 0%, rgba(124,58,237,0.10), transparent 40%),
+            var(--bg);
+        color:var(--text);
+        min-height:100vh;
+        padding:40px 24px;
+    }
+    header{
+        text-align:center;
+        margin-bottom:40px;
+    }
+    header h1{
+        font-size:2.2rem;
+        letter-spacing:1px;
+        background:linear-gradient(90deg,var(--accent),var(--accent2));
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+    }
+    header h2{
+        font-weight:400;
+        color:var(--muted);
+        margin-top:6px;
+        font-size:1.05rem;
+    }
+    .container{
+        max-width:1100px;
+        margin:0 auto;
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+        gap:22px;
+    }
+    .card{
+        background:var(--panel);
+        border:1px solid var(--panel-border);
+        border-radius:14px;
+        padding:22px 24px;
+        position:relative;
+        overflow:hidden;
+        transition:transform .25s ease, box-shadow .25s ease;
+    }
+    .card:hover{
+        transform:translateY(-4px);
+        box-shadow:0 10px 30px rgba(0,229,255,0.08);
+    }
+    .card::before{
+        content:"";
+        position:absolute;
+        top:0;left:0;right:0;
+        height:3px;
+        background:linear-gradient(90deg,var(--accent),var(--accent2));
+    }
+    .card h3{
+        font-size:0.95rem;
+        text-transform:uppercase;
+        letter-spacing:1px;
+        color:var(--muted);
+        margin-bottom:16px;
+    }
+    .row{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,0.05);
+        font-size:0.95rem;
+    }
+    .row:last-child{border-bottom:none;}
+    .row span:first-child{color:var(--muted);}
+    .badge{
+        padding:4px 12px;
+        border-radius:999px;
+        font-weight:600;
+        font-size:0.8rem;
+        letter-spacing:0.5px;
+    }
+    .badge.green{background:rgba(34,197,94,0.15);color:var(--green);border:1px solid rgba(34,197,94,0.4);}
+    .badge.amber{background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.4);}
+    .badge.red{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.4);}
+    .badge.yellow{background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.4);}
+
+    .detection-rule{margin-top:10px;text-align:center;font-size:13px;color:var(--muted);}
+
+    .telemetry-update{
+        margin-top:12px;
+        text-align:center;
+        font-size:11px;
+        color:var(--green);
+        opacity:0.85;
+    }
+
+    .score-wrap{margin-top:6px;}
+    .score-bar{
+        height:10px;
+        width:100%;
+        background:#1f2937;
+        border-radius:6px;
+        overflow:hidden;
+        margin-top:8px;
+    }
+    .score-fill{
+        height:100%;
+        border-radius:6px;
+        background:linear-gradient(90deg,var(--green),var(--accent));
+        width:80%; /* 12.43 / 15.50 */
+        transition:width 1s ease;
+    }
+    .score-labels{
+        display:flex;
+        justify-content:space-between;
+        font-size:0.8rem;
+        color:var(--muted);
+        margin-top:6px;
+    }
+    .metrics-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+        margin-top:8px;
+    }
+    .metric{
+        text-align:center;
+        background:rgba(255,255,255,0.03);
+        border-radius:10px;
+        padding:14px 8px;
+    }
+    .metric .value{
+        font-size:1.4rem;
+        font-weight:700;
+        color:var(--accent);
+    }
+    .metric .label{
+        font-size:0.75rem;
+        color:var(--muted);
+        margin-top:4px;
+        text-transform:uppercase;
+        letter-spacing:0.5px;
+    }
+    .pulse{
+        display:inline-block;
+        width:8px;height:8px;
+        border-radius:50%;
+        background:var(--green);
+        margin-right:6px;
+        box-shadow:0 0 0 rgba(34,197,94,0.6);
+        animation:pulse 1.6s infinite;
+    }
+    @keyframes pulse{
+        0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6);}
+        70%{box-shadow:0 0 0 8px rgba(34,197,94,0);}
+        100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}
+    }
+    footer{
+        text-align:center;
+        margin-top:40px;
+        color:var(--muted);
+        font-size:0.8rem;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>UAV Cybersecurity Monitoring Dashboard</h1>
+    <h2>Project 1 — Self-Supervised UAV Attack Detection</h2>
+</header>
+
+<div class="container">
+
+    <!-- System Status -->
+    <div class="card">
+        <h3>System Status</h3>
+        <div class="row">
+            <span>UAV Status</span>
+            <span class="badge green"><span class="pulse"></span>CONNECTED</span>
+        </div>
+        <div class="row">
+            <span>AI Model</span>
+            <span class="badge green">ACTIVE</span>
+        </div>
+        <div class="row">
+            <span>Detection</span>
+            <span id="detection-status" class="badge green">NORMAL</span>
+        </div>
+    </div>
+
+    <!-- AI Detection -->
+    <div class="card">
+        <h3>AI Detection</h3>
+        <div class="row">
+            <span>Anomaly Score</span>
+            <span><strong id="score-value">12.43</strong></span>
+        </div>
+        <div class="row">
+            <span>Threshold</span>
+            <span><strong id="threshold-value">15.50</strong></span>
+        </div>
+        <div class="score-wrap">
+            <div class="score-bar"><div id="score-fill" class="score-fill"></div></div>
+
+        <div class="detection-rule">
+            <span id="decision-rule">Score &lt; Threshold → NORMAL</span>
+        </div>
+            <div class="score-labels">
+                <span>0</span>
+                <span>Threshold: 15.50</span>
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+                <span>Peak Score</span>
+                <span><strong id="peak-score-value">0.00</strong></span>
+            </div>
+
+            <div class="row">
+                <span>Last Detection</span>
+                <span><strong id="last-detection-value">None</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live UAV Telemetry -->
+    <div class="card">
+        <h3>Live UAV Telemetry</h3>
+
+        <div class="row">
+            <span>Position (X / Y / Z)</span>
+            <span>
+                <strong id="position-value">0.00 / 0.00 / 0.00</strong>
+            </span>
+        </div>
+
+        <div class="row">
+            <span>Velocity (VX / VY / VZ)</span>
+            <span>
+                <strong id="velocity-value">0.00 / 0.00 / 0.00</strong>
+            </span>
+        </div>
+
+        <div class="row">
+            <span>Acceleration</span>
+            <span>
+                <strong id="acceleration-value">0.00 / 0.00 / 0.00</strong>
+            </span>
+        </div>
+
+        <div class="row">
+            <span>Attitude (R / P / Y)</span>
+            <span>
+                <strong id="attitude-value">0.00 / 0.00 / 0.00</strong>
+            </span>
+        </div>
+
+        <div class="row">
+            <span>Battery</span>
+            <span>
+                <strong id="battery-value">0.00 V / 0%</strong>
+            </span>
+        </div>
+
+        <div class="row">
+            <span>Motors</span>
+            <span>
+                <strong id="motors-value">0.000 / 0.000 / 0.000 / 0.000</strong>
+            </span>
+        </div>
+
+        <div class="telemetry-update">
+            ● Live data updating every 1 second
+        </div>
+    </div>
+
+    <!-- Model Info -->
+    <div class="card">
+        <h3>Model</h3>
+        <div class="row"><span>Model</span><span>Self-Supervised Transformer</span></div>
+        <div class="row"><span>Input</span><span>20 × 21</span></div>
+        <div class="row"><span>Embedding</span><span>128-D</span></div>
+        <div class="row"><span>Detector</span><span>Mahalanobis Distance</span></div>
+    </div>
+
+    <!-- Baseline Performance -->
+    <div class="card">
+        <h3>Baseline Performance</h3>
+        <div class="metrics-grid">
+            <div class="metric">
+                <div class="value">98.09%</div>
+                <div class="label">Accuracy</div>
+            </div>
+            <div class="metric">
+                <div class="value">91.30%</div>
+                <div class="label">Precision</div>
+            </div>
+            <div class="metric">
+                <div class="value">87.50%</div>
+                <div class="label">Recall</div>
+            </div>
+            <div class="metric">
+                <div class="value">89.36%</div>
+                <div class="label">F1 Score</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    UAV Cybersecurity Dashboard &copy; 2026 — Real-time anomaly monitoring
+</footer>
+
+<script>
+async function fetchLiveDetection() {
+    try {
+        const response = await fetch("/api/live");
+
+        if (response.status < 200 || response.status >= 300) {
+            throw new Error("Live API request failed");
+        }
+
+        const result = await response.json();
+
+        updateDetectionCard(result);
+        updateConnectionStatus(result);
+
+    } catch (error) {
+        console.error("Live detection error:", error);
+        showDisconnected();
+    }
+}
+
+function updateDetectionCard(result) {
+    const scoreElement = document.querySelector("#score-value");
+    const thresholdElement = document.querySelector("#threshold-value");
+    const badge = document.querySelector("#detection-status");
+    const scoreFill = document.querySelector("#score-fill");
+
+    if (scoreElement) {
+        scoreElement.textContent = Number(result.score).toFixed(2);
+    }
+
+    if (thresholdElement) {
+        thresholdElement.textContent = Number(result.threshold).toFixed(2);
+    }
+
+    const positionElement = document.querySelector("#position-value");
+    const velocityElement = document.querySelector("#velocity-value");
+    const accelerationElement = document.querySelector("#acceleration-value");
+    const attitudeElement = document.querySelector("#attitude-value");
+    const batteryElement = document.querySelector("#battery-value");
+    const motorsElement = document.querySelector("#motors-value");
+    const peakScoreElement = document.querySelector("#peak-score-value");
+    const lastDetectionElement = document.querySelector("#last-detection-value");
+
+    if (positionElement) {
+        positionElement.textContent =
+            `${Number(result.x).toFixed(2)} / ${Number(result.y).toFixed(2)} / ${Number(result.z).toFixed(2)}`;
+    }
+
+    if (velocityElement) {
+        velocityElement.textContent =
+            `${Number(result.vx).toFixed(3)} / ${Number(result.vy).toFixed(3)} / ${Number(result.vz).toFixed(3)}`;
+    }
+
+    if (accelerationElement) {
+        accelerationElement.textContent =
+            `${Number(result.ax).toFixed(2)} / ${Number(result.ay).toFixed(2)} / ${Number(result.az).toFixed(2)}`;
+    }
+
+    if (attitudeElement) {
+        attitudeElement.textContent =
+            `${Number(result.roll).toFixed(2)} / ${Number(result.pitch).toFixed(2)} / ${Number(result.yaw).toFixed(2)}`;
+    }
+
+    if (batteryElement) {
+        batteryElement.textContent =
+            `${Number(result.voltage_v).toFixed(2)} V / ${(Number(result.remaining) * 100).toFixed(0)}%`;
+    }
+
+    if (motorsElement) {
+        motorsElement.textContent =
+            `${Number(result.motor_1).toFixed(3)} / ${Number(result.motor_2).toFixed(3)} / ${Number(result.motor_3).toFixed(3)} / ${Number(result.motor_4).toFixed(3)}`;
+    }
+
+    if (peakScoreElement) {
+        peakScoreElement.textContent = Number(result.peak_score).toFixed(2);
+    }
+
+    if (lastDetectionElement) {
+        lastDetectionElement.textContent = result.last_detection;
+    }
+
+    if (scoreFill && result.threshold > 0) {
+        const percentage = Math.min(
+            (result.score / result.threshold) * 100,
+            100
+        );
+        scoreFill.style.width = percentage + "%";
+    }
+
+    const decisionRule = document.querySelector("#decision-rule");
+
+    if (decisionRule) {
+        if (result.status === "ANOMALY") {
+            decisionRule.textContent = "Score ≥ Threshold → ANOMALY";
+        } else if (result.status === "NORMAL") {
+            decisionRule.textContent = "Score < Threshold → NORMAL";
+        } else {
+            decisionRule.textContent = "Collecting telemetry...";
+        }
+    }
+
+    if (badge) {
+        badge.textContent = result.status;
+
+        if (result.status === "ANOMALY") {
+            badge.className = "badge red";
+        } else if (result.status === "NORMAL") {
+            badge.className = "badge green";
+        } else {
+            badge.className = "badge yellow";
+        }
+    }
+}
+
+function updateConnectionStatus(result) {
+    const elements = document.querySelectorAll("*");
+
+    elements.forEach(element => {
+        if (element.textContent.trim() === "UAV CONNECTED") {
+            element.textContent =
+                result.connected ? "UAV CONNECTED" : "UAV DISCONNECTED";
+        }
+
+        if (element.textContent.trim() === "AI ACTIVE") {
+            element.textContent =
+                result.connected ? "AI ACTIVE" : "AI WAITING";
+        }
+    });
+}
+
+function showDisconnected() {
+    const badge = document.querySelector("#detection-status");
+
+    if (badge) {
+        badge.textContent = "OFFLINE";
+        badge.className = "badge red";
+    }
+}
+
+fetchLiveDetection();
+setInterval(fetchLiveDetection, 1000);
+</script>
+
+</body>
+</html>
+
+
+

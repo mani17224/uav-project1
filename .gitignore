@@ -1,0 +1,41 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.env
+*.tmp
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large/generated ML files
+*.h5
+*.keras
+*.npz
+*.npy
+*.pkl
+
+# PX4/Gazebo generated files
+build/
+logs/
+
+# PX4 flight logs and generated datasets
+abnormal_full/
+abnormal_local/
+data_attack01/
+data_flight01/
+data_flight02/
+data_flight03/
+
+# Generated processed data
+processed_data/
+
+# Backup files
+*.backup*
+*_backup.py
