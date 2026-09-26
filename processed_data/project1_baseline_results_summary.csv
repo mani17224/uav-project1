@@ -1,0 +1,6 @@
+Method,Accuracy,Precision,Recall,F1,TN,FP,FN,TP
+Autoencoder,95.8,68.57,100.0,81.36,454,22,0,48
+Transformer + Euclidean,90.84,0.0,0.0,0.0,476,0,48,0
+Transformer + Standard Mahalanobis,98.09,91.3,87.5,89.36,472,4,6,42
+Transformer + Robust Mahalanobis,89.12,0.0,0.0,0.0,467,9,48,0
+Transformer + Cosine,88.93,36.84,29.17,32.56,452,24,34,14

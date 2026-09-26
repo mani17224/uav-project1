@@ -15,11 +15,6 @@ __pycache__/
 Thumbs.db
 
 # Large/generated ML files
-*.h5
-*.keras
-*.npz
-*.npy
-*.pkl
 
 # PX4/Gazebo generated files
 build/
@@ -34,7 +29,6 @@ data_flight02/
 data_flight03/
 
 # Generated processed data
-processed_data/
 
 # Backup files
 *.backup*
